@@ -1,8 +1,8 @@
-import soundfile as sf
-
+from dotenv import load_dotenv
 from sound_util.detect_sound import detect_sound_intervals, create_sound_file
 
 try:
+    load_dotenv()
     sound_intervals = detect_sound_intervals(file_path="audio.wav")
     create_sound_file(sound_intervals)
 except Exception as e:
