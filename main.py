@@ -13,12 +13,14 @@ def detect_sound_intervals(file_path, interval_duration=0.05, threshold=0.002):
     # Initialize the list to store results
     sound_intervals = []
     no_slient_data = []
-    start_time = float(0)
+
     start_sec = 0
-    # Iterate over the signal in intervals
+    end_sec = 0
+
     for start in range(0, len(y), interval_samples):
         end = start + interval_samples
         start_sec += interval_duration
+        end_sec += interval_duration
 
         # Get the current interval segment
         segment = y[start:end]
@@ -40,7 +42,6 @@ def detect_sound_intervals(file_path, interval_duration=0.05, threshold=0.002):
                     }
                 )
                 no_slient_data = []
-                start_time = start_sec
 
     return sound_intervals
 
