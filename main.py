@@ -3,7 +3,7 @@ import numpy as np
 import soundfile as sf
 
 
-def detect_sound_intervals(file_path, interval_duration=0.05, threshold=0.002):
+def detect_sound_intervals(file_path, interval_duration=0.05, threshold=0.005):
     # Load the audio file
     y, sr = librosa.load(file_path)
 
@@ -61,13 +61,12 @@ try:
 
         if (end_sec - start_sec) >= 1:
             sf.write(
-                f"sound_intervals_{str(start_sec)}.wav", data=segment, samplerate=sr
+                f"sound_intervals_{start_sec:.2f}_{end_sec:.2f}.wav", data=segment, samplerate=sr
             )
             print(f"Sound detected from {start_sec:.2f} to {end_sec:.2f} seconds")
 
 except Exception as e:
     print(e)
-finally:
     import glob
     import os
 
