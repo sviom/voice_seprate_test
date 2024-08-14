@@ -11,8 +11,8 @@ def split_audio_on_silence(input_file, silence_thresh=-50, min_silence_len=1.0):
     # Convert silence_thresh from dB to amplitude
     # silence_thresh_amp = librosa.db_to_amplitude(silence_thresh)
     # silence_thresh_amp = librosa.amplitude_to_db()
-    librosa.display.waveshow(y=y)
-    plt.show()
+    # librosa.display.waveshow(y=y)
+    # plt.show()
 
     # Find silent frames
     non_silent_intervals = librosa.effects.split(y, top_db=-silence_thresh)
@@ -49,7 +49,7 @@ def plot_audio_with_intervals(y, sr, intervals):
 # Usage Example
 input_file = "audio.wav"  # Replace with your audio file path
 base_filename = "output_chunk"
-silence_thresh = -50  # Silence threshold in dB
+silence_thresh = -30  # Silence threshold in dB
 min_silence_len = 1.0  # Minimum length of silence in seconds
 
 
@@ -62,4 +62,4 @@ y, sr, chunks, non_silent_intervals = split_audio_on_silence(
 save_audio_chunks(chunks, sr, base_filename)
 
 # Plot the audio with non-silent intervals
-plot_audio_with_intervals(y, sr, non_silent_intervals)
+# plot_audio_with_intervals(y, sr, non_silent_intervals)
