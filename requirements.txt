@@ -1,0 +1,6 @@
+black
+librosa
+numpy
+SpeechRecognition
+openai
+pydub
