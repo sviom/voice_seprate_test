@@ -1,69 +1,41 @@
 import librosa
-import soundfile as sf
 import numpy as np
-import os
+import matplotlib.pyplot as plt
 
 
-def separate_audio(
-    input_file, output_path, silence_threshold=20, frame_length=2048, hop_length=512
-):
-    # Load audio file
-    y, sr = librosa.load(input_file, sr=None)
+def detect_sound_intervals(file_path, interval_duration=0.05, threshold=0.02):
+    # Load the audio file
+    y, sr = librosa.load(file_path)
 
-    # Compute short-term energy
-    energy = np.array(
-        [sum(abs(y[i : i + frame_length] ** 2)) for i in range(0, len(y), hop_length)]
-    )
+    # plt.plot(y, label="data", alpha=0.7)
+    # plt.grid()
+    # plt.legend()
+    # plt.show()
 
-    # Convert energy to dB
-    log_energy = 10 * np.log10(energy + 1e-6)
+    # Calculate the number of samples in each interval
+    interval_samples = int(interval_duration * sr)
 
-    # Detect non-silent frames
-    non_silent_frames = log_energy > -silence_threshold
-    non_silent_times = librosa.frames_to_time(
-        np.where(non_silent_frames)[0], sr=sr, hop_length=hop_length
-    )
+    # Initialize the list to store results
+    sound_intervals = []
 
-    # Split non-silent times into continuous intervals
-    intervals = librosa.util.contiguous_regions(non_silent_frames)
+    # Iterate over the signal in intervals
+    for start in range(0, len(y), interval_samples):
+        end = start + interval_samples
 
-    # Output non-silent and silent audio files
-    os.makedirs(output_path, exist_ok=True)
+        # Get the current interval segment
+        segment = y[start:end]
 
-    non_silent_segments = []
-    silent_segments = []
+        # Calculate the root mean square (RMS) energy of the segment
+        rms = np.sqrt(np.mean(segment**2))
+        print("rms : ", rms)
 
-    for idx, (start, end) in enumerate(intervals):
-        start_sample = int(librosa.frames_to_samples(start))
-        end_sample = int(librosa.frames_to_samples(end))
-        non_silent_segments.append((start_sample, end_sample))
+        # Determine if the segment contains sound based on the threshold
+        if rms >= threshold:
+            sound_intervals.append((start / sr, end / sr))
 
-    prev_end = 0
-    for start, end in non_silent_segments:
-        if prev_end < start:
-            silent_segments.append((prev_end, start))
-        prev_end = end
-    if prev_end < len(y):
-        silent_segments.append((prev_end, len(y)))
-
-    def save_segments(segments, prefix):
-        for idx, (start, end) in enumerate(segments):
-            segment_audio = y[start:end]
-            start_time = librosa.samples_to_time(start, sr=sr)
-            end_time = librosa.samples_to_time(end, sr=sr)
-            sf.write(
-                os.path.join(
-                    output_path, f"{prefix}_{start_time:.2f}_{end_time:.2f}.wav"
-                ),
-                segment_audio,
-                sr,
-            )
-
-    save_segments(non_silent_segments, "non_silent")
-    save_segments(silent_segments, "silent")
+    return sound_intervals
 
 
-# Example usage:
-input_file = "example.wav"
-output_path = "output_segments"
-separate_audio(input_file, output_path)
+detect_sound_intervals(file_path="audio.wav")
+# for interval in sound_intervals:
+#     print(f"Sound detected from {interval[0]:.2f} to {interval[1]:.2f} seconds")
