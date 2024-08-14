@@ -1,98 +1,69 @@
-import os
-import uuid
 import librosa
 import soundfile as sf
 import numpy as np
-import speech_recognition as sppech_r
-import matplotlib.pyplot as plt
-
-y, sr = librosa.load("audio.wav")
-
-# Set the silence threshold
-silence_threshold = 0.005
-# silence_threshold = 0.01
+import os
 
 
-# Compute the RMS (Root Mean Square) energy
-rms = librosa.feature.rms(y=y)
-# times = librosa.times_like(rms)
-# plt.plot(times, rms[0])
-# plt.show()
+def separate_audio(
+    input_file, output_path, silence_threshold=20, frame_length=2048, hop_length=512
+):
+    # Load audio file
+    y, sr = librosa.load(input_file, sr=None)
 
-# Empty lists to save the audio data for silent and non-silent parts
-silent_data = []
-not_silent_data = []
-all_data = []
-
-# Variables to save the state
-is_silent = rms[0, 0] < silence_threshold
-start = 0
-
-sound_data = []
-for i in range(rms.shape[1]):
-    # Check it the current state matches the computed state
-    # if is_silent == (rms[0, i] < silence_threshold):
-    #     continue
-    is_silent = rms[0, i] < silence_threshold
-    # Save the appropriate audio data
-    if is_silent:
-        if len(sound_data) > 0:
-            all_data.append(
-                {
-                    "start_time": start,
-                    "end_time": i,
-                    "data": sound_data,
-                    "is_slient": False,
-                }
-            )
-            sound_data = []
-    else:
-        sound_data.extend(y[start:i])
-
-    # Update the state and the start position
-    # is_silent = not is_silent
-    start = i
-
-# Last chunk
-if is_silent:
-    # all_data.append(
-    #     {"start_time": start, "end_time": -1, "data": y[start:], "is_slient": True}
-    # )
-    print("test")
-# silent_data.extend(y[start:])
-else:
-    all_data.append(
-        {"start_time": start, "end_time": -1, "data": y[start:], "is_slient": False}
+    # Compute short-term energy
+    energy = np.array(
+        [sum(abs(y[i : i + frame_length] ** 2)) for i in range(0, len(y), hop_length)]
     )
-# not_silent_data.extend(y[start:])
+
+    # Convert energy to dB
+    log_energy = 10 * np.log10(energy + 1e-6)
+
+    # Detect non-silent frames
+    non_silent_frames = log_energy > -silence_threshold
+    non_silent_times = librosa.frames_to_time(
+        np.where(non_silent_frames)[0], sr=sr, hop_length=hop_length
+    )
+
+    # Split non-silent times into continuous intervals
+    intervals = librosa.util.contiguous_regions(non_silent_frames)
+
+    # Output non-silent and silent audio files
+    os.makedirs(output_path, exist_ok=True)
+
+    non_silent_segments = []
+    silent_segments = []
+
+    for idx, (start, end) in enumerate(intervals):
+        start_sample = int(librosa.frames_to_samples(start))
+        end_sample = int(librosa.frames_to_samples(end))
+        non_silent_segments.append((start_sample, end_sample))
+
+    prev_end = 0
+    for start, end in non_silent_segments:
+        if prev_end < start:
+            silent_segments.append((prev_end, start))
+        prev_end = end
+    if prev_end < len(y):
+        silent_segments.append((prev_end, len(y)))
+
+    def save_segments(segments, prefix):
+        for idx, (start, end) in enumerate(segments):
+            segment_audio = y[start:end]
+            start_time = librosa.samples_to_time(start, sr=sr)
+            end_time = librosa.samples_to_time(end, sr=sr)
+            sf.write(
+                os.path.join(
+                    output_path, f"{prefix}_{start_time:.2f}_{end_time:.2f}.wav"
+                ),
+                segment_audio,
+                sr,
+            )
+
+    save_segments(non_silent_segments, "non_silent")
+    save_segments(silent_segments, "silent")
 
 
-# Write out the silent and non-silent parts to disk
-# sf.write("silent.wav", np.array(silent_data), sr)
-# sf.write("not_silent.wav", np.array(not_silent_data), sr)
-
-
-text_list = []
-r = sppech_r.Recognizer()
-
-try:
-    for sound in all_data:
-        if sound["is_slient"] == True:
-            continue
-
-        temp_id = str(uuid.uuid4())
-        temp_file_path = f"{temp_id}.wav"
-        sf.write(temp_file_path, np.array(sound["data"]), sr)
-        temp_duration = librosa.get_duration(path=temp_file_path)
-        if temp_duration < 0.5:
-            continue
-        kr_audio = sppech_r.AudioData(
-            frame_data=sound["data"], sample_rate=sr, sample_width=4
-        )
-        audio_text = r.recognize_whisper_api(kr_audio, api_key="")
-        text_list.append(audio_text)
-        os.remove(temp_file_path)
-except Exception as e:
-    print(f"error : {e}")
-finally:
-    os.remove(temp_file_path)
+# Example usage:
+input_file = "example.wav"
+output_path = "output_segments"
+separate_audio(input_file, output_path)
