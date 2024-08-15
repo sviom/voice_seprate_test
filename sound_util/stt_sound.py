@@ -1,14 +1,10 @@
 def create_speech_to_text(audio_file_list: list[str]):
     import os
-    import speech_recognition as sr
-    from speech_recognition import AudioData
-
-    open_ai_key = os.getenv("OPEN_AI_KEY")
-
     from openai import OpenAI
 
+    text_list = []
+    open_ai_key = os.getenv("OPEN_AI_KEY")
     client = OpenAI(api_key=open_ai_key)
-
     for audio_file_path in audio_file_list:
         with open(audio_file_path, "rb") as audio_file:
             # audio_file = open(audio_file_path, "rb")
@@ -16,5 +12,6 @@ def create_speech_to_text(audio_file_list: list[str]):
                 model="whisper-1", file=audio_file
             )
             print(transcription.text)
+            text_list.append(transcription.text)
 
-    print("test")
+    return text_list
