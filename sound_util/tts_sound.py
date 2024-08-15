@@ -32,14 +32,5 @@ def create_text_to_speech_file(
             )
 
             response.write_to_file(file_path)
-        # return file_path
     except Exception as e:
-        from main import logger
-        from datetime import datetime
-
-        logger.info(
-            "[create_text_to_speech_file] "
-            + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        logger.error(f"[create_text_to_speech_file]  error : {format(e)}")
-        return ""
+        print(e)
