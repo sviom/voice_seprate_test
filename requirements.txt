@@ -7,3 +7,4 @@ pydub
 matplotlib
 SoundFile
 python-dotenv
+google-cloud-speech
