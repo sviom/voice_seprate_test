@@ -18,7 +18,7 @@ def create_speech_to_text(audio_file_list: list[str]):
 
 def stt_using_google(audio_file_path: str):
     import speech_recognition as sr
-
+    text = ""
     try:
         r = sr.Recognizer()
         with sr.AudioFile(audio_file_path) as source:
@@ -30,6 +30,7 @@ def stt_using_google(audio_file_path: str):
             language="ko-KR",
         )
         print("successful: ", response)
+        text = response
     except sr.UnknownValueError:
         print("Google Cloud Speech could not understand audio")
 
@@ -37,3 +38,6 @@ def stt_using_google(audio_file_path: str):
         print(
             "Could not request results from Google Cloud Speech service; {0}".format(e)
         )
+
+
+    return text
