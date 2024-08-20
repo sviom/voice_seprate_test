@@ -51,7 +51,7 @@ def detect_sound_intervals(file_path, interval_duration=0.05, threshold=0.005):
 
 
 def create_sound_file(
-    sound_intervals: list[dict[str, int | list | float]]
+    sound_intervals: list[dict[str, int | list | float]], write_file_path: str
 ) -> list[str]:
     import soundfile as sf
 
@@ -63,9 +63,11 @@ def create_sound_file(
         sr = interval["sr"]
 
         if (end_sec - start_sec) >= 1:
-            file_path = f"sound_intervals_{start_sec:.2f}_{end_sec:.2f}.wav"
+            file_path = os.path.join(
+                write_file_path, f"sound_intervals_{start_sec:.2f}_{end_sec:.2f}.wav"
+            )
             sf.write(
-                file_path,
+                write_file_path,
                 data=segment,
                 samplerate=sr,
             )

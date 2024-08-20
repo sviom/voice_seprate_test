@@ -26,7 +26,7 @@ def stt_using_google(audio_file_path: str):
 
         response = r.recognize_google_cloud(
             audio_data=audio,
-            credentials_json="google_credential.json",
+            credentials_json="anai-dub-2d8d74989129.json",
             language="ko-KR",
         )
         print("successful: ", response)

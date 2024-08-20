@@ -7,9 +7,17 @@ try:
     load_dotenv()
     stt_using_google(audio_file_path="audio.wav")
 
-
     sound_intervals = detect_sound_intervals(file_path="audio.wav")
-    sound_file_list = create_sound_file(sound_intervals)
+
+    import os
+    import uuid
+
+    temp_guid = str(uuid.uuid4())
+    temp_path = os.path.join("temp", temp_guid)
+
+    sound_file_list = create_sound_file(
+        sound_intervals=sound_intervals, write_file_path=temp_path
+    )
     text_list = create_speech_to_text(sound_file_list)
     create_text_to_speech_file(text_list, tts_models["alloy"])
 except Exception as e:
